@@ -3,12 +3,14 @@
 import { isRegExp, remove } from 'shared/util'
 import { getFirstComponentChild } from 'core/vdom/helpers/index'
 
+// Ro: 缓存记录
 type CacheEntry = {
   name: ?string;
   tag: ?string;
   componentInstance: Component;
 };
 
+// Ro: 缓存记录集合
 type CacheEntryMap = { [key: string]: ?CacheEntry };
 
 function getComponentName (opts: ?VNodeComponentOptions): ?string {
@@ -47,7 +49,10 @@ function pruneCacheEntry (
   current?: VNode
 ) {
   const entry: ?CacheEntry = cache[key]
+  // Ro: 存在记录 && (当前VN无效 || 当前vn 与 记录的tag不同)
   if (entry && (!current || entry.tag !== current.tag)) {
+    // Ro: 困惑1：当时想着干掉cached vm，反正是delete cache，索性吧instance置为null，这样正好节约点资源，但是提示调用$destroy()异常
+    // Ro: 答疑1：所以在我直接通过引用删掉后，控制台报错$destroy() error
     entry.componentInstance.$destroy()
   }
   cache[key] = null
@@ -68,6 +73,8 @@ export default {
 
   methods: {
     cacheVNode() {
+      // Ro: this哪来的这些对象？
+      // cache,keys 来自created()
       const { cache, keys, vnodeToCache, keyToCache } = this
       if (vnodeToCache) {
         const { tag, componentInstance, componentOptions } = vnodeToCache
@@ -78,9 +85,13 @@ export default {
         }
         keys.push(keyToCache)
         // prune oldest entry
+        // Ro: 干掉最老的节点
         if (this.max && keys.length > parseInt(this.max)) {
+          // Ro: 困惑1: 为什么要传递_vnode呢？用key还不够吗？
+          // Ro: 答疑1: 要将cache的instance destroy掉
           pruneCacheEntry(cache, keys[0], keys, this._vnode)
         }
+        // Ro为什么？要手动置空
         this.vnodeToCache = null
       }
     }
@@ -93,6 +104,7 @@ export default {
 
   destroyed () {
     for (const key in this.cache) {
+      // Ro骚操作: 直接不传递第四个参数，全部干掉
       pruneCacheEntry(this.cache, key, this.keys)
     }
   },
@@ -112,7 +124,9 @@ export default {
   },
 
   render () {
+    // Ro插槽组件集合
     const slot = this.$slots.default
+    // Ro仅取第1个
     const vnode: VNode = getFirstComponentChild(slot)
     const componentOptions: ?VNodeComponentOptions = vnode && vnode.componentOptions
     if (componentOptions) {
