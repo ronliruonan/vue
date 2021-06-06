@@ -1,5 +1,17 @@
 /* @flow */
 
+/**
+ * 2021-06-06
+ * emergency、batch + out + stand + receive 同处在EMain下的transation + keep-alive
+ * 那么emergency 和 batch 不会被delete，也不会重新渲染
+ * out、stand、receive则会被delete cache，重新渲染vn
+ * 
+ * ？？？？？？
+ * the stand list, the resblcok list, 同处在1个transation + keep-alive下，
+ * 那么从stand list 跳转到 resblock list时，为什么会重新搞1个transation呢？ transtion的key不同？
+ * 那么从stand list 跳转到 resblock list时，为什么stand list的transation中还会出现一个stand list, key不同的vn呢？ 搞得跳转后 stand list 还触发一次created 和mounted？
+ */
+
 // Provides transition support for a single element/component.
 // supports transition mode (out-in / in-out)
 
